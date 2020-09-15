@@ -1,16 +1,18 @@
-import React, { useState } from 'react'
+import React, { useState, useEffect } from 'react'
 import './Payment.css'
 import { useStateValue } from './StateProvider'
 import CheckoutProduct from './CheckoutProduct'
-import { Link } from 'react-router-dom'
+import { Link, useHistory } from 'react-router-dom'
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
 import { Card } from '@material-ui/core'
 import CurrencyFormat from 'react-currency-format'
 import { getBasketTotal } from './reducer'
+import axios from './axios'
 
 function Payment() {
   const [{ basket, user }, dispatch]  = useStateValue();
 
+  const history = useHistory();
   const stripe = useStripe();
   const elements = useElements();
 
@@ -18,10 +20,46 @@ function Payment() {
   const [processing, setProcessing] = useState("")
   const [error, setError] = useState(null);
   const [disabled, setDisabled] = useState(true);
+  const [clientSecret, setClientSecret] = useState(true);
+
+  useEffect(() => {
+      // generate the special stripe secret which allows us to charge a customer
+      const getClientSecret = async () => {
+        const response = await axios({
+            method: 'post',
+            // Stripe expects the total in a currencies subunits => 100 => type 10000
+            url: `/payments/create?total=${getBasketTotal(basket) * 100}`
+        });
+        setClientSecret(response.data.clientSecret)
+      } 
+
+      getClientSecret();
+  },[basket])
+
+  console.log('the secret is...', clientSecret)
 
   const handleSubmit = async (e) => {
       // do all the fancy stripe stuff ....
       e.preventDefault();
+      setProcessing(true);
+
+      const payload = await stripe.confirmCardPayment(clientSecret, {
+          payment_method: {
+              card: elements.getElement(CardElement)
+          }
+      }).then(({ paymentIntent }) => {
+          // paymentIntent = payment confirmation
+
+          setSucceeded(true);
+          setError(null);
+          setProcessing(false);
+
+          dispatch({
+              type: 'EMPTY_BASKET',
+          })
+
+          history.replace('/orders')
+      })
       
   }
 
@@ -97,8 +135,8 @@ function Payment() {
                      </button>
                     </div>
 
-                    {/* Error */}
-                    {error && <div>{error}</div>}
+                    {/* Errors */}
+                    {error && <div>{error}</div> }
                 </form>
 
           </div>

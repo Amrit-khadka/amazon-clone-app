@@ -35,6 +35,12 @@ const reducer = (state, action) => {
           ...state,
           basket: newBasket
         }
+
+      case 'EMPTY_BASKET':
+        return {
+          ...state,
+          basket: []
+        }
         //old way that delete every item with same id
       // return {
           //   ...state,
