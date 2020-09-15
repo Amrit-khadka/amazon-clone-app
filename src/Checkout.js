@@ -4,6 +4,8 @@ import Subtotal from './Subtotal'
 import CheckoutProduct from './CheckoutProduct'
 import { useStateValue } from './StateProvider'
 
+
+
 function Checkout() {
   const[{basket, user}, dispatch] = useStateValue();
   return (
@@ -28,6 +30,7 @@ function Checkout() {
                 rating= {item.rating}
               />
             ))}
+         
              
         {/* BasketItem */}
         {/* BasketItem */}
