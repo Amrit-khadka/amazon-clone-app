@@ -4,10 +4,10 @@ import { useStateValue } from './StateProvider'
 import CheckoutProduct from './CheckoutProduct'
 import { Link, useHistory } from 'react-router-dom'
 import { CardElement, useStripe, useElements } from '@stripe/react-stripe-js'
-import { Card } from '@material-ui/core'
 import CurrencyFormat from 'react-currency-format'
 import { getBasketTotal } from './reducer'
 import axios from './axios'
+import { db } from './firebase'
 
 function Payment() {
   const [{ basket, user }, dispatch]  = useStateValue();
@@ -49,6 +49,17 @@ function Payment() {
           }
       }).then(({ paymentIntent }) => {
           // paymentIntent = payment confirmation
+
+          db
+            .collection('users')
+            .doc(user?.uid)
+            .collection('orders')
+            .doc(paymentIntent.id)
+            .set({
+                basket: basket,
+                amount: paymentIntent.amount,
+                created: paymentIntent.created
+            })
 
           setSucceeded(true);
           setError(null);
